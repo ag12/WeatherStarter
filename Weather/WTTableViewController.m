@@ -20,6 +20,10 @@
 
 @interface WTTableViewController ()
 @property(strong) NSDictionary *weather;
+@property(nonatomic, strong) NSMutableDictionary *currentDictionary;
+@property(nonatomic, strong) NSMutableDictionary *xmlWeather;
+@property(nonatomic, strong) NSString *elementName;
+@property(nonatomic, strong) NSMutableString *outstring;
 @end
 
 @implementation WTTableViewController
@@ -36,6 +40,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    [self requstJSONWithCallBack];
     self.navigationController.toolbarHidden = NO;
 
     // Uncomment the following line to preserve selection between presentations.
@@ -78,9 +83,36 @@
 }
 #pragma mark - Helper method(DRY)
 
--(void)handleSuccessRespond:(id)responseObject {
+//Plist and Json objects can be handled in same way
+-(void)handleJSONOrPLISTSuccessRespond:(id)responseObject type:(int)type{
     self.weather = (NSDictionary *)responseObject;
-    self.title = @"Json Retrieved";
+    switch (type) {
+        case 1: {
+            self.title = @"Json Retrieved";
+            break;
+        }
+        case 2: {
+            self.title = @"Plist Retrieved";
+            break;
+        }
+        default:
+            break;
+    }
+    [self.tableView reloadData];
+    NSLog(@"%@", self.weather);
+}
+
+-(void)handleXMLSuccessRespond:(id)responseObject {
+
+    NSXMLParser *XMLParser = (NSXMLParser *)responseObject;
+    [XMLParser setShouldProcessNamespaces:YES];
+
+
+    XMLParser.delegate = self;
+    [XMLParser parse];
+
+    self.weather = (NSDictionary *)responseObject;
+    self.title = @"Xml Retrieved";
     [self.tableView reloadData];
     NSLog(@"%@", self.weather);
 }
@@ -102,27 +134,49 @@
 
     WTClient *sharedClient = [WTClient sharedClient];
     [sharedClient loadJSONFromServerWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-        [self handleSuccessRespond: responseObject];
+        //Nu kjor vi
+        [self handleJSONOrPLISTSuccessRespond: responseObject type:1];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         [self showErrorDialog];
     }];
 
 }
+#pragma mark - WTClientDelegate
 
 - (void)didFinishedLoadinWeatherJSONFromServer:(AFHTTPRequestOperation *)operation responseObject:(id)responseObject error:(NSError *)error {
 
     if (error == nil) {
         //Vi kjor nu
-        [self handleSuccessRespond: responseObject];
+        [self handleJSONOrPLISTSuccessRespond: responseObject type:1];
+    } else {
+        [self showErrorDialog];
+    }
+}
+- (void)didFinishedLoadinWeatherPLISTFromServer:(AFHTTPRequestOperation *)operation responseObject:(id)responseObject error:(NSError *)error {
+    if (error == nil) {
+        //Vi kjor nu
+        [self handleJSONOrPLISTSuccessRespond: responseObject type:2];
+    } else {
+        [self showErrorDialog];
+    }
+}
+
+- (void)didFinishedLoadinWeatherXMLFromServer:(AFHTTPRequestOperation *)operation responseObject:(id)responseObject error:(NSError *)error {
+    if (error == nil) {
+        //Vi kjor nu
+        [self handleXMLSuccessRespond: responseObject];
     } else {
         [self showErrorDialog];
     }
 }
 
 -(void)requstJSONWithDelegate {
-    WTClient *sharedClient = [WTClient sharedClient];
+
+    /*WTClient *sharedClient = [WTClient sharedClient];
     sharedClient.delegate = self;
-    [sharedClient loadWeatherJSONFromServer];
+    [sharedClient loadWeatherJSONFromServer];*/
+
+    [[[WTClient alloc] initWithDelegate:self] loadWeatherJSONFromServer];
 }
 
 - (IBAction)jsonTapped:(id)sender
@@ -134,12 +188,17 @@
 
 - (IBAction)plistTapped:(id)sender
 {
-    
+
+
+    [[[WTClient alloc] initWithDelegate:self] loadWeatherPLISTFromServer];
+
 }
 
 - (IBAction)xmlTapped:(id)sender
 {
-    
+    //[[[WTClient alloc] initWithDelegate:self] loadWeatherXMLFromServer];
+    [self showErrorDialog];
+
 }
 
 - (IBAction)clientTapped:(id)sender
@@ -161,6 +220,21 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
+    if (!self.weather) {
+        return 0;
+    }
+    switch (section) {
+        case 0: {
+            return 1;
+        }
+        case 1:{
+            NSArray *upcomingWeather = [self.weather upcomingWeather];
+            return [upcomingWeather count];
+        }
+        default:{
+            return 0;
+        }
+    }
     return 0;
 }
 
@@ -169,9 +243,19 @@
     static NSString *CellIdentifier = @"WeatherCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
     
-    // Configure the cell...
-    
-    
+    NSDictionary *dayWeather = nil;
+    switch (indexPath.section) {
+        case 0:
+            dayWeather = [self.weather currentCondition];
+            break;
+        case 1: {
+            NSArray *upcomingWeather = [self.weather upcomingWeather];
+            dayWeather = upcomingWeather[indexPath.row];
+        }
+        default:
+            break;
+    }
+    cell.textLabel.text = [dayWeather weatherDescription];
     return cell;
 }
 
@@ -182,5 +266,69 @@
 {
     // Navigation logic may go here. Create and push another view controller.
 }
+
+#pragma mark - NSXMLParserDelegate
+
+
+- (void)parserDidStartDocument:(NSXMLParser *)parser {
+
+    NSLog(@"parserDidStartDocument");
+    self.xmlWeather = [NSMutableDictionary dictionary];
+}
+
+-(void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName attributes:(NSDictionary *)attributeDict {
+
+    NSLog(@"didStartElement");
+    self.elementName = qName;
+    if ([qName isEqualToString:@"current_condition"] || [qName isEqualToString:@"weather"] || [qName isEqualToString:@"request"]) {
+        self.currentDictionary = [NSMutableDictionary dictionary];
+    }
+    self.outstring = [NSMutableString string];
+}
+
+- (void)parser:(NSXMLParser *)parser foundCharacters:(NSString *)string {
+    NSLog(@"foundCharacters");
+    if (!self.elementName) {
+        return;
+    }
+    [self.outstring appendFormat:@"%@", string];
+}
+
+-(void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName {
+    NSLog(@"didEndElement");
+
+    if ([qName isEqualToString:@"current_condition"] || [qName isEqualToString:@"request"]) {
+        self.xmlWeather[qName] = @[self.currentDictionary];
+        self.currentDictionary = nil;
+    } else if ([qName isEqualToString:@"weather"]) {
+        NSMutableArray *array = self.xmlWeather[@"weather"] ? : [NSMutableArray array];
+        [array addObject:self.currentDictionary];
+        self.xmlWeather[@"weather"] = array;
+
+        self.currentDictionary = nil;
+    } else if ([qName isEqualToString:@"value"]) {
+
+    } else if ([qName isEqualToString:@"weatherDesc"] || [qName isEqualToString:@"weatherIconUrl"]) {
+        NSDictionary *dictionary = @{@"value": self.outstring};
+        NSArray *array = @[dictionary];
+        self.currentDictionary[qName] = array;
+    } else if (qName) {
+        self.currentDictionary[qName] = self.outstring;
+    }
+
+    self.elementName = nil;
+}
+
+- (void) parserDidEndDocument:(NSXMLParser *)parser
+{
+    NSLog(@"parserDidEndDocument");
+    self.weather = @{@"data": self.xmlWeather};
+    self.title = @"XML Retrieved";
+    [self.tableView reloadData];
+}
+
+
+
+
 
 @end

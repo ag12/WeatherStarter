@@ -16,6 +16,7 @@ static NSString * const PLISTFormat = @"weather.php?format=plist";
 @interface WTClient()
 
 -(void)requestServerWithCompletionBlock:(NSURLRequest *)request success:(void(^)(AFHTTPRequestOperation *, id))success failure:(void(^)(AFHTTPRequestOperation *, NSError *))failure;
+- (void)loadWeatherDataFromServer:(NSURLRequest *)request;
 
 @end
 
@@ -90,35 +91,108 @@ static NSString * const PLISTFormat = @"weather.php?format=plist";
     [operation start];
 }
 
-#pragma mark - For delegate-protocol-pattern json
-
+#pragma mark -  Delegate-protocol-pattern
 
 //Some repeating code, just for convenience sake
-- (void)loadWeatherJSONFromServer {
+//hold your horses! it looks sophisticated, but it's not!
+//Should perhaps not do it like this in a real world project
+- (void)loadWeatherDataFromServer:(NSURLRequest *)request type:(int)type {
 
-    NSLog(@"loadJSONFromServerWithSuccess");
-
-    NSURL *JSONUrl = [NSURL URLWithString:[NSString stringWithFormat:BaseURLString, JSONFormat]];
-    NSURLRequest *request = [NSURLRequest requestWithURL:JSONUrl];
-
+    NSLog(@"Requesting server for data, wait for delegate...");
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
 
-    operation.responseSerializer = [AFJSONResponseSerializer serializer];
+    switch (type) {
+        case 1: {
+            //JOSN
+            operation.responseSerializer = [AFJSONResponseSerializer serializer];
+            break;
+        }
+        case 2: {
+            //PLST
+            operation.responseSerializer = [AFPropertyListResponseSerializer serializer];
+            break;
+        }
+        case 3:{
+            //XML
+            operation.responseSerializer = [AFXMLParserResponseSerializer serializer];
+            break;
+        }
+        default:
+            break;
+    }
     [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NO ERROR
-        [self.delegate didFinishedLoadinWeatherJSONFromServer:operation responseObject:responseObject error:nil];
+
+        switch (type) {
+            case 1: {
+                //JOSN
+                [self.delegate didFinishedLoadinWeatherJSONFromServer:operation responseObject:responseObject error:nil];
+                break;
+            }
+            case 2: {
+                //PLST
+                [self.delegate didFinishedLoadinWeatherPLISTFromServer:operation responseObject:responseObject error:nil];
+                break;
+            }
+            case 3:{
+                //XML
+                [self.delegate didFinishedLoadinWeatherXMLFromServer:operation responseObject:responseObject error:nil];
+                break;
+            }
+            default:
+                break;
+        }
+
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         //NO RESPONSEOBJECT
-        [self.delegate didFinishedLoadinWeatherJSONFromServer:operation responseObject:nil error:error];
+        switch (type) {
+            case 1: {
+                //JOSN
+                [self.delegate didFinishedLoadinWeatherJSONFromServer:operation responseObject:nil error:error];
+                break;
+            }
+            case 2: {
+                //PLST
+                [self.delegate didFinishedLoadinWeatherPLISTFromServer:operation responseObject:nil error:error];
+                break;
+            }
+            case 3:{
+                //XML
+                [self.delegate didFinishedLoadinWeatherXMLFromServer:operation responseObject:nil error:error];
+                break;
+            }
+            default:
+                break;
+        }
     }];
-    
+
     [operation start];
 }
 
+- (void)loadWeatherJSONFromServer {
+    NSLog(@"Requesting json data...");
+    NSURL *JSONUrl = [NSURL URLWithString:[NSString stringWithFormat:BaseURLString, JSONFormat]];
+    NSURLRequest *request = [NSURLRequest requestWithURL:JSONUrl];
+    NSLog(@"URL: %@", JSONUrl.absoluteString);
+    [self loadWeatherDataFromServer:request type:1];
+}
+
+- (void)loadWeatherPLISTFromServer {
+    NSLog(@"Requesting plist data...");
+    NSURL *PLISTUrl = [NSURL URLWithString:[NSString stringWithFormat:BaseURLString, PLISTFormat]];
+    NSLog(@"URL: %@", PLISTUrl.absoluteString);
+    NSURLRequest *request = [NSURLRequest requestWithURL:PLISTUrl];
+    [self loadWeatherDataFromServer:request type:2];
+}
 
 
-
-
+- (void)loadWeatherXMLFromServer {
+    NSLog(@"Requesting xml data...");
+    NSURL *XMLUrl = [NSURL URLWithString:[NSString stringWithFormat:BaseURLString, XMLFormat]];
+    NSLog(@"URL: %@", XMLUrl.absoluteString);
+    NSURLRequest *request = [NSURLRequest requestWithURL:XMLUrl];
+    [self loadWeatherDataFromServer:request type:3];
+}
 
 
 

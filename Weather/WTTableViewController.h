@@ -10,7 +10,7 @@
 
 #import "WTClient.h"
 
-@interface WTTableViewController : UITableViewController <WTClientDelegate>
+@interface WTTableViewController : UITableViewController <WTClientDelegate, NSXMLParserDelegate>
 
 // Actions
 - (IBAction)clear:(id)sender;

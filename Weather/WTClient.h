@@ -9,6 +9,8 @@
 @protocol WTClientDelegate <NSObject>
 
 - (void)didFinishedLoadinWeatherJSONFromServer:(AFHTTPRequestOperation *)operation responseObject:(id)responseObject error:(NSError *)error;
+- (void)didFinishedLoadinWeatherXMLFromServer:(AFHTTPRequestOperation *)operation responseObject:(id)responseObject error:(NSError *)error;
+- (void)didFinishedLoadinWeatherPLISTFromServer:(AFHTTPRequestOperation *)operation responseObject:(id)responseObject error:(NSError *)error;
 
 @end
 
@@ -21,6 +23,8 @@
 - (void)loadJSONFromServerWithSuccess:(void(^)(AFHTTPRequestOperation *, id))success failure:(void(^)(AFHTTPRequestOperation *, NSError *))failure;
 
 - (void)loadWeatherJSONFromServer;
+- (void)loadWeatherPLISTFromServer;
+- (void)loadWeatherXMLFromServer;
 
 @property (nonatomic, weak) id<WTClientDelegate> delegate;
 
