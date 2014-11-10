@@ -14,7 +14,7 @@
 #import "NSDictionary+weather_package.h"
 
 #import "WTClient.h"
-
+#import <AFNetworking/UIImageView+AFNetworking.h>
 
 
 
@@ -107,14 +107,8 @@
     NSXMLParser *XMLParser = (NSXMLParser *)responseObject;
     [XMLParser setShouldProcessNamespaces:YES];
 
-
     XMLParser.delegate = self;
     [XMLParser parse];
-
-    self.weather = (NSDictionary *)responseObject;
-    self.title = @"Xml Retrieved";
-    [self.tableView reloadData];
-    NSLog(@"%@", self.weather);
 }
 -(void)showErrorDialog {
     UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Error" message:@"Problems downloading data" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
@@ -196,14 +190,17 @@
 
 - (IBAction)xmlTapped:(id)sender
 {
-    //[[[WTClient alloc] initWithDelegate:self] loadWeatherXMLFromServer];
-    [self showErrorDialog];
-
+    [[[WTClient alloc] initWithDelegate:self] loadWeatherXMLFromServer];
 }
 
 - (IBAction)clientTapped:(id)sender
 {
-    
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"AFHTTPSessionManager"
+                                                             delegate:self
+                                                    cancelButtonTitle:@"Cancel"
+                                               destructiveButtonTitle:nil
+                                                    otherButtonTitles:@"HTTP GET", @"HTTP POST", nil];
+    [actionSheet showFromBarButtonItem:sender animated:YES];
 }
 
 - (IBAction)apiTapped:(id)sender
@@ -256,6 +253,26 @@
             break;
     }
     cell.textLabel.text = [dayWeather weatherDescription];
+
+
+    NSURL *url = [NSURL URLWithString:dayWeather.weatherIconURL];
+    NSURLRequest *request = [NSURLRequest requestWithURL:url];
+
+    UIImage *placehoderImage = [UIImage imageNamed:@"placeholder"];
+
+    __weak UITableViewCell *weakCell = cell;
+
+    [cell.imageView setImageWithURLRequest:request
+                          placeholderImage:placehoderImage
+                                   success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+
+                                       weakCell.imageView.image = image;
+                                       [weakCell setNeedsLayout];
+
+                                   } failure:nil];
+
+
+
     return cell;
 }
 
@@ -321,7 +338,6 @@
 
 - (void) parserDidEndDocument:(NSXMLParser *)parser
 {
-    NSLog(@"parserDidEndDocument");
     self.weather = @{@"data": self.xmlWeather};
     self.title = @"XML Retrieved";
     [self.tableView reloadData];
