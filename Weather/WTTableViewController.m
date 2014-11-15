@@ -342,6 +342,70 @@
     self.title = @"XML Retrieved";
     [self.tableView reloadData];
 }
+#pragma - Private method for callback
+
+- (void) performGETRequestInBackground {
+
+    [[WTClient sharedClient] getJSONDataFromServer:^(id responseObject) {
+        [self didPerformGETRequestInBackground:responseObject];
+    } failure:^(NSError *error) {
+        [self failedRequestInBackground:error];
+    }];
+}
+
+
+- (void) performPOSTRequestInBackground {
+
+    [[WTClient sharedClient] postJSONDataFromServer:^(id responseObject) {
+        [self didPerformPOSTRequestInBackground:responseObject];
+    } failure:^(NSError *error) {
+        [self failedRequestInBackground:error];
+    }];
+}
+-(void)didPerformPOSTRequestInBackground:(id)responseObject {
+    self.weather = responseObject;
+    self.title = @"HTTP POST";
+    [self.tableView reloadData];
+
+}
+-(void)didPerformGETRequestInBackground:(id)responseObject {
+    self.weather = responseObject;
+    self.title = @"HTTP GET";
+    [self.tableView reloadData];
+
+}
+
+-(void)failedRequestInBackground:(NSError *)error {
+
+}
+#pragma - UIActionSheet delegate
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
+
+    if( buttonIndex == [actionSheet cancelButtonIndex]) {
+        return;
+    }
+
+    if (buttonIndex == 0) {
+        [self performGETRequestInBackground];
+    } else if (buttonIndex == 1) {
+        [self performPOSTRequestInBackground];
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
 
 
 

@@ -8,6 +8,7 @@
 
 #import "WTClient.h"
 
+
 static NSString * const BaseURLString = @"http://www.raywenderlich.com/demos/weather_sample/%@";
 static NSString * const JSONFormat = @"weather.php?format=json";
 static NSString * const XMLFormat = @"weather.php?format=xml";
@@ -42,6 +43,70 @@ static NSString * const PLISTFormat = @"weather.php?format=plist";
 }
 
 #pragma mark - For asynchronous request
+- (AFHTTPSessionManager *)prepareManagerForRequst {
+
+    NSURL *baseURL = [NSURL URLWithString:[NSString stringWithFormat:BaseURLString, @""]];
+    AFHTTPSessionManager *manager = [[AFHTTPSessionManager alloc] initWithBaseURL:baseURL];
+    manager.responseSerializer = [AFJSONResponseSerializer serializer];
+    return manager;
+}
+
+
+- (void)getJSONDataFromServer:(RestRequestSuccessCallback)success failure:(RestRequestFailureCallback)failure {
+
+
+    AFHTTPSessionManager *manager = [self prepareManagerForRequst];
+    [self getPathInBackground:@"weather.php" parameters:@{@"format" : @"json"} manager:manager sucsses:^(id responseObject) {
+        success(responseObject);
+    } failure:^(NSError *error) {
+        failure(error);
+    }];
+}
+
+- (void)postJSONDataFromServer:(RestRequestSuccessCallback)success failure:(RestRequestFailureCallback)failure {
+
+
+    AFHTTPSessionManager *manager = [self prepareManagerForRequst];
+    [self postPathInBackground:@"weather.php" parameters:@{@"format" : @"json"} manager:manager sucsses:^(id responseObject) {
+        success(responseObject);
+    } failure:^(NSError *error) {
+        failure(error);
+    }];
+}
+
+- (void) getPathInBackground:(NSString *)get
+                                         parameters:(NSDictionary *)parameters
+                                         manager:(AFHTTPSessionManager *)manager
+                                         sucsses:(RestRequestSuccessCallback)success
+                                         failure:(RestRequestFailureCallback)failure {
+
+    [manager GET:get parameters:parameters
+         success:^(NSURLSessionDataTask *task, id responseObject) {
+             NSLog(@"%@", responseObject);
+             success(responseObject);
+
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        NSLog(@"%@", error.description);
+
+        failure(error);
+    }];
+}
+
+- (void) postPathInBackground:(NSString *)get
+                 parameters:(NSDictionary *)parameters
+                    manager:(AFHTTPSessionManager *)manager
+                    sucsses:(RestRequestSuccessCallback)success
+                    failure:(RestRequestFailureCallback)failure {
+
+    [manager POST:get parameters:parameters
+         success:^(NSURLSessionDataTask *task, id responseObject) {
+             NSLog(@"%@", responseObject);
+             success(responseObject);
+
+         } failure:^(NSURLSessionDataTask *task, NSError *error) {
+             failure(error);
+         }];
+}
 
 //Could use this one for as one common request - method and to keep it DRY!
 -(void)requestServerWithCompletionBlock:(NSURLRequest *)request success:(void(^)(AFHTTPRequestOperation *, id))success failure:(void(^)(AFHTTPRequestOperation *, NSError *))failure {
@@ -95,7 +160,9 @@ static NSString * const PLISTFormat = @"weather.php?format=plist";
 
 //Some repeating code, just for convenience sake
 //hold your horses! it looks sophisticated, but it's not!
-//Should perhaps not do it like this in a real world project
+//Should definitely not do it like this in a real world project
+//Its best to not use delegte for this task anyway, you should define callback within you WC.
+//se get+post JSONDataFromServer
 - (void)loadWeatherDataFromServer:(NSURLRequest *)request type:(int)type {
 
     NSLog(@"Requesting server for data, wait for delegate...");

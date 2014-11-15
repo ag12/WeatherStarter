@@ -6,6 +6,11 @@
 //  Copyright (c) 2014 Scott Sherwood. All rights reserved.
 //
 
+
+
+typedef void (^RestRequestSuccessCallback)(id responseObject);
+typedef void (^RestRequestFailureCallback)(NSError *error);
+
 @protocol WTClientDelegate <NSObject>
 
 - (void)didFinishedLoadinWeatherJSONFromServer:(AFHTTPRequestOperation *)operation responseObject:(id)responseObject error:(NSError *)error;
@@ -19,6 +24,9 @@
 + (instancetype)sharedClient;
 
 - (id)initWithDelegate:(id<WTClientDelegate>)delegate;
+
+- (void)getJSONDataFromServer:(RestRequestSuccessCallback)success failure:(RestRequestFailureCallback)failure;
+- (void)postJSONDataFromServer:(RestRequestSuccessCallback)success failure:(RestRequestFailureCallback)failure;
 
 - (void)loadJSONFromServerWithSuccess:(void(^)(AFHTTPRequestOperation *, id))success failure:(void(^)(AFHTTPRequestOperation *, NSError *))failure;
 
