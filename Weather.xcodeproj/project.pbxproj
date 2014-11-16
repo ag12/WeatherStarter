@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		1A938F031A17ED4600BFA465 /* WTWeatherHTTPClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A938F021A17ED4600BFA465 /* WTWeatherHTTPClient.m */; };
 		1AC937551A0FB54500A8C7AB /* WTClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC937541A0FB54500A8C7AB /* WTClient.m */; };
+		1AD6D3971A190A4700FAD02E /* WTUIAlertViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AD6D3961A190A4700FAD02E /* WTUIAlertViewManager.m */; };
 		B9AA56A5765630DF2E3A5405 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FFF3A816CFB2151D16774E2 /* libPods.a */; };
 		D233D07A16B400EF005212DE /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = D233D07816B400EF005212DE /* InfoPlist.strings */; };
 		D233D07C16B400EF005212DE /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = D233D07B16B400EF005212DE /* main.m */; };
@@ -34,6 +35,8 @@
 		1A938F021A17ED4600BFA465 /* WTWeatherHTTPClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WTWeatherHTTPClient.m; sourceTree = "<group>"; };
 		1AC937531A0FB54500A8C7AB /* WTClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WTClient.h; sourceTree = "<group>"; };
 		1AC937541A0FB54500A8C7AB /* WTClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WTClient.m; sourceTree = "<group>"; };
+		1AD6D3951A190A4700FAD02E /* WTUIAlertViewManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WTUIAlertViewManager.h; sourceTree = "<group>"; };
+		1AD6D3961A190A4700FAD02E /* WTUIAlertViewManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WTUIAlertViewManager.m; sourceTree = "<group>"; };
 		9FFF3A816CFB2151D16774E2 /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D233D06B16B400EF005212DE /* Weather.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Weather.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D233D07716B400EF005212DE /* Weather-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Weather-Info.plist"; sourceTree = "<group>"; };
@@ -100,6 +103,15 @@
 			name = Service;
 			sourceTree = "<group>";
 		};
+		1AD6D3911A1909EC00FAD02E /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				1AD6D3951A190A4700FAD02E /* WTUIAlertViewManager.h */,
+				1AD6D3961A190A4700FAD02E /* WTUIAlertViewManager.m */,
+			);
+			name = Utils;
+			sourceTree = "<group>";
+		};
 		D14B6F1CEA4546A4B77C0B3D /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -145,6 +157,7 @@
 		D233D07516B400EF005212DE /* Weather */ = {
 			isa = PBXGroup;
 			children = (
+				1AD6D3911A1909EC00FAD02E /* Utils */,
 				1AC9374E1A0FB3EC00A8C7AB /* Service */,
 				D233D08716B400EF005212DE /* MainStoryboard.storyboard */,
 				D233D0D016B405D5005212DE /* NSDictionary+weather.h */,
@@ -275,6 +288,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D233D07C16B400EF005212DE /* main.m in Sources */,
+				1AD6D3971A190A4700FAD02E /* WTUIAlertViewManager.m in Sources */,
 				D233D08016B400EF005212DE /* WTAppDelegate.m in Sources */,
 				1A938F031A17ED4600BFA465 /* WTWeatherHTTPClient.m in Sources */,
 				D233D09416B4011B005212DE /* WTTableViewController.m in Sources */,

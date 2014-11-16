@@ -15,6 +15,7 @@
 
 #import "WTClient.h"
 #import <AFNetworking/UIImageView+AFNetworking.h>
+#import "WTUIAlertViewManager.h"
 
 
 
@@ -43,6 +44,15 @@
     [self requstJSONWithCallBack];
     self.navigationController.toolbarHidden = NO;
 
+    self.locationManager = [[CLLocationManager alloc] init];
+    self.locationManager.delegate = self;
+
+
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0f) {
+        if ([self.locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+            [self.locationManager requestAlwaysAuthorization];
+        }
+    }
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
  
@@ -99,7 +109,7 @@
             break;
     }
     [self.tableView reloadData];
-    NSLog(@"%@", self.weather);
+    //NSLog(@"%@", self.weather);
 }
 
 -(void)handleXMLSuccessRespond:(id)responseObject {
@@ -205,7 +215,7 @@
 
 - (IBAction)apiTapped:(id)sender
 {
-    
+    [self.locationManager startUpdatingLocation];
 }
 
 #pragma mark - Table view data source
@@ -241,6 +251,7 @@
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
     
     NSDictionary *dayWeather = nil;
+    NSLog(@"%ld", indexPath.section);
     switch (indexPath.section) {
         case 0:
             dayWeather = [self.weather currentCondition];
@@ -253,7 +264,9 @@
             break;
     }
     cell.textLabel.text = [dayWeather weatherDescription];
+    NSLog(@"%@", dayWeather.weatherIconURL);
 
+    NSLog(@"%@", @(dayWeather.count));
 
     NSURL *url = [NSURL URLWithString:dayWeather.weatherIconURL];
     NSURLRequest *request = [NSURLRequest requestWithURL:url];
@@ -391,24 +404,31 @@
     } else if (buttonIndex == 1) {
         [self performPOSTRequestInBackground];
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
+#pragma - CLLocationManager delegate
 
+-(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
+    CLLocation *newLocation = [locations lastObject];
 
+    if ([newLocation.timestamp timeIntervalSinceNow] > 300) {
+        return;
+    }
+    [self.locationManager stopUpdatingLocation];
 
+    [[WTWeatherHTTPClient sharedHTTPClientWithDelegate:self] updateWeatherAtLocation:newLocation forNumberOfDays:5];
+}
+
+- (void)weatherHTTPClient:(WTWeatherHTTPClient *)client didUpdateWithWeather:(id)weather {
+    NSLog(@"didUpdateWithWeather");
+    self.weather = weather;
+    self.title = @"API Updated";
+    [self.tableView reloadData];
+}
+
+- (void)weatherHTTPClient:(WTWeatherHTTPClient *)client  :(NSError *)error {
+    [WTUIAlertViewManager showErrorAlertView:error];
+}
 
 
 @end
